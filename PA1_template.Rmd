@@ -1,25 +1,107 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-  html_document:
+  html_document: 
     keep_md: true
 ---
-
-
 ## Loading and preprocessing the data
 
-
-
+```{r}
+setwd("../Activity Monitoring/")
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip","activity.zip")
+unzip("activity.zip", "activity.csv")
+activity.df = read.csv("activity.csv")
+library(data.table)
+activity.dt = data.table(activity.df)
+activity.dt[,"interval":=as.factor(interval)]
+```
 ## What is mean total number of steps taken per day?
 
+### Calculate the total number of steps taken per day
+```{r}
+activity.dt[,.(steps.sum=sum(steps,na.rm = TRUE)),by=date]
+```
 
+### Histogram of the total number of steps taken each day
+```{r}
+hist(activity.dt[,.(steps.sum=sum(steps,na.rm = TRUE)),by=date][,steps.sum],main = "histogram of sum of steps per day", xlab = "Total Steps in a Day")
+```
+
+### Calculate and report the mean and median of the total number of steps taken per day
+```{r}
+activity.with.NA.summary = summary(activity.dt[,.(steps.sum=sum(steps)),by=date][,steps.sum])
+activity.with.NA.summary
+```
 
 ## What is the average daily activity pattern?
 
+### Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+plot(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=interval][,steps.mean],type="l", xlab = "5 minute intervals in a day", ylab = "Average number of steps", main = "Time series plot of average number of steps \n for each 5 minute interval in a day")
 
+interval.max=which.max(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=interval][,steps.mean])
+
+steps.max=max(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=interval][,steps.mean])
+
+text(interval.max+25,steps.max, labels = paste(activity.dt[interval.max,interval], round(steps.max), sep = ","))
+```
 
 ## Imputing missing values
 
+### Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+paste("number of rows with NAs is", sum(is.na(activity.dt[,steps])))
+```
+
+### Replace NAs with means  for that 5-minute interval
+Strategy for imputing missing values: missing NA values are replaced by the average values for that time interval across the 2 month period
+
+R package "zoo" is used to replace the missing NAs using na.aggregate() function 
+```{r}
+if(!require("zoo")){
+  install.packages("zoo",repos="http://cran.rstudio.com/")
+}
+library(zoo)
+activity.dt.complete = copy(activity.dt)
+activity.dt.complete[,steps:=as.integer(na.aggregate(steps)),by=interval]
+```
+
+### Histogram of the total number of steps taken each day
+```{r}
+hist(activity.dt.complete[,.(steps.sum=sum(steps,na.rm = TRUE)),by=date][,steps.sum],main = "histogram of sum of steps per day", xlab = "Total Steps in a Day")
+```
+
+### Calculate and report the mean and median of the total number of steps taken per day
+```{r}
+activity.with.replacement.summary = summary(activity.dt.complete[,.(steps.sum=sum(steps)),by=date][,steps.sum])
+activity.with.replacement.summary
+```
+
+### Compare means and medians before and after NA replacements
+```{r}
+boxplot(activity.dt[,.(steps.sum=sum(steps)),by=date][,steps.sum],activity.dt.complete[,.(steps.sum=sum(steps,na.rm = TRUE)),by=date][,steps.sum], names = c("before NA replacement","after NA replacement"), main = "Comparison of Sum of Steps\nbefore and after NA replacement")
+
+points(1:2,c(activity.with.NA.summary["Mean"], activity.with.replacement.summary["Mean"]),pch=15)
+
+text(1:2,c(activity.with.NA.summary["Median"]-1000, activity.with.replacement.summary["Median"]-1500),labels = c(paste("Median = ",activity.with.NA.summary["Median"]),paste("Median = ", activity.with.replacement.summary["Median"])))
+
+text(1:2,c(activity.with.NA.summary["Mean"]+1000, activity.with.replacement.summary["Mean"]+1000),labels = c(paste("Mean = ",activity.with.NA.summary["Mean"]),paste("Mean = ", activity.with.replacement.summary["Mean"])))
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+activity.dt.complete[,weekday:=ifelse(weekdays(as.Date(date)) %in% c("Saturday","Sunday"),"weekend","weekday")]
+
+activity.dt.complete[,weekday:=as.factor(weekday)]
+
+par(mfrow = c(2,1))
+
+plot(activity.dt.complete[weekday=="weekend",.(steps.mean=mean(steps)),by=interval][,steps.mean], type="l", ylim = c(0,250), xlab = "", ylab = "", main = "Weekend")
+
+plot(activity.dt.complete[weekday=="weekday",.(steps.mean=mean(steps)),by=interval][,steps.mean], type="l", ylim = c(0,250), xlab = "", ylab = "", main = "Weekday")
+
+mtext("------Number of Steps------", side = 2, outer=TRUE, padj = 2)
+mtext("------Interval------", side = 1, outer=TRUE, padj = -2)
+```
