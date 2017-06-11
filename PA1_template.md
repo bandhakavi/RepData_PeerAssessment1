@@ -131,10 +131,25 @@ interval.max=which.max(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=
 
 steps.max=max(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=interval][,steps.mean])
 
-text(interval.max+25,steps.max, labels = paste(activity.dt[interval.max,interval], round(steps.max), sep = ","))
+points(interval.max, steps.max, pch = 19, col = "red")
+
+text(interval.max+75,steps.max - 5, labels = paste("max number of steps: ",round(steps.max),";\n time interval is: ",activity.dt[interval.max,interval]))
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+### Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+As identified in the graph
+
+
+```r
+paste("max number of steps is: ",round(steps.max),"; during the time interval:  ",activity.dt[interval.max,interval])
+```
+
+```
+## [1] "max number of steps is:  206 ; during the time interval:   835"
+```
 
 ## Imputing missing values
 
@@ -205,7 +220,7 @@ activity.dt.complete[,steps:=as.integer(na.aggregate(steps)),by=interval]
 hist(activity.dt.complete[,.(steps.sum=sum(steps,na.rm = TRUE)),by=date][,steps.sum],main = "histogram of sum of steps per day", xlab = "Total Steps in a Day")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ### Calculate and report the mean and median of the total number of steps taken per day
 
@@ -231,7 +246,7 @@ text(1:2,c(activity.with.NA.summary["Median"]-1000, activity.with.replacement.su
 text(1:2,c(activity.with.NA.summary["Mean"]+1000, activity.with.replacement.summary["Mean"]+1000),labels = c(paste("Mean = ",activity.with.NA.summary["Mean"]),paste("Mean = ", activity.with.replacement.summary["Mean"])))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -286,4 +301,4 @@ mtext("------Number of Steps------", side = 2, outer=TRUE, padj = 2)
 mtext("------Interval------", side = 1, outer=TRUE, padj = -2)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->

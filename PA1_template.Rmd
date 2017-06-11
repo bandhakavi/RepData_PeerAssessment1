@@ -43,7 +43,17 @@ interval.max=which.max(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=
 
 steps.max=max(activity.dt[,.(steps.mean=mean(steps, na.rm = TRUE)), by=interval][,steps.mean])
 
-text(interval.max+25,steps.max, labels = paste(activity.dt[interval.max,interval], round(steps.max), sep = ","))
+points(interval.max, steps.max, pch = 19, col = "red")
+
+text(interval.max+75,steps.max - 5, labels = paste("max number of steps: ",round(steps.max),";\n time interval is: ",activity.dt[interval.max,interval]))
+```
+
+### Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+As identified in the graph
+
+```{r}
+paste("max number of steps is: ",round(steps.max),"; during the time interval:  ",activity.dt[interval.max,interval])
 ```
 
 ## Imputing missing values
